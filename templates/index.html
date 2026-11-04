@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>블로그 제작 도구</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1>블로그 제작 도구</h1>
+    <span id="countLabel" class="count-label">추가된 사진: 0장</span>
+  </header>
+
+  <section class="howto-card">
+    <h2>이렇게 써보세요</h2>
+    <ol class="howto-steps">
+      <li><span class="step-num">1</span>사진을 추가하고 키워드·테두리·워터마크 등 원하는 옵션을 설정하세요</li>
+      <li><span class="step-num">2</span>저장 폴더를 선택하거나 ZIP으로 받아요</li>
+      <li><span class="step-num">3</span>"저장 시작"을 누르면 끝!</li>
+    </ol>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="photo">
+      <span class="tab-icon">🖼️</span><span>사진 처리</span>
+    </button>
+    <button class="tab-btn" data-tab="emoji">
+      <span class="tab-icon">😊</span><span>이모지</span>
+    </button>
+    <button class="tab-btn" data-tab="seo">
+      <span class="tab-icon">📝</span><span>글자수 체크</span>
+    </button>
+  </nav>
+
+  <section id="photoTab" class="tab-panel active">
+
+    <section class="toolbar">
+      <button id="addBtn" class="btn btn-primary">+ 사진 추가</button>
+      <input type="file" id="fileInput" multiple accept="image/*" hidden>
+      <button id="clearBtn" class="btn btn-ghost">전체 삭제</button>
+    </section>
+
+    <h2 class="section-title">⚙️ 처리 옵션</h2>
+    <section class="options">
+      <div class="opt">
+        <label>공통 키워드</label>
+        <div class="opt-row">
+          <input id="commonKeyword" type="text" placeholder="예: 제주도여행">
+          <button id="applyKeywordBtn" class="btn btn-secondary">전체 적용</button>
+        </div>
+      </div>
+      <div class="opt">
+        <label>출력 형식</label>
+        <select id="outputFormat">
+          <option value="auto">자동 (원본 형식 유지)</option>
+          <option value="jpg">JPG (용량 작음)</option>
+          <option value="webp">WebP (용량 더 작음, 투명도 지원)</option>
+          <option value="png">PNG (무손실, 용량 큼)</option>
+        </select>
+        <span class="hint">누끼 적용 사진은 투명도 때문에 자동으로 WebP로 저장돼요</span>
+      </div>
+      <div class="opt">
+        <label>압축 품질 <span id="qualityValue">85%</span></label>
+        <input id="qualitySlider" type="range" min="1" max="100" value="85">
+        <span class="hint">낮을수록 용량이 작아져요 (PNG는 적용 안 됨)</span>
+      </div>
+      <div class="opt">
+        <label>사진 크기 줄이기 (가로·세로 중 긴 쪽, px)</label>
+        <input id="maxSide" type="number" placeholder="예: 1920 (비우면 원본 크기 유지)" min="1">
+      </div>
+      <div class="opt">
+        <label>테두리 (약 5mm ≈ 19px)</label>
+        <div class="opt-row">
+          <label class="checkbox-label"><input type="checkbox" id="borderEnable"> 추가</label>
+          <input id="borderWidth" type="number" value="19" min="1" style="width:70px">
+          <span class="unit">px</span>
+          <input id="borderColor" type="color" value="#ffffff">
+        </div>
+      </div>
+    </section>
+
+    <section class="options">
+      <div class="opt">
+        <label>워터마크 문구</label>
+        <div class="opt-row">
+          <label class="checkbox-label"><input type="checkbox" id="watermarkEnable"> 추가</label>
+          <input id="watermarkText" type="text" placeholder="예: ⓒ 내블로그" style="width:140px">
+        </div>
+        <div class="opt-row" style="margin-top:6px">
+          <select id="watermarkPosition">
+            <option value="bottom-right">오른쪽 아래</option>
+            <option value="bottom-left">왼쪽 아래</option>
+            <option value="top-right">오른쪽 위</option>
+            <option value="top-left">왼쪽 위</option>
+            <option value="center">가운데</option>
+          </select>
+          <input id="watermarkSize" type="number" value="28" min="8" style="width:60px">
+          <span class="unit">px</span>
+          <input id="watermarkColor" type="color" value="#ffffff">
+        </div>
+        <div class="opt-row" style="margin-top:6px">
+          <span class="unit">불투명도</span>
+          <input id="watermarkOpacity" type="range" min="10" max="100" value="100" style="width:140px">
+          <span id="watermarkOpacityValue" class="unit">100%</span>
+        </div>
+      </div>
+      <div class="opt">
+        <label>워터마크 로고/이미지</label>
+        <div class="opt-row">
+          <label class="checkbox-label"><input type="checkbox" id="watermarkImageEnable"> 추가</label>
+          <input id="watermarkImageFile" type="file" accept="image/*" style="width:160px">
+        </div>
+        <span class="hint" id="watermarkImagePreviewHint">로고 이미지를 선택하면 자동으로 켜져요 (아래 사진 목록에서 미리보기가 보여요)</span>
+        <img id="watermarkImagePreview" style="position:absolute; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;">
+        <div class="opt-row" style="margin-top:6px">
+          <select id="watermarkImagePosition">
+            <option value="bottom-right">오른쪽 아래</option>
+            <option value="bottom-left">왼쪽 아래</option>
+            <option value="top-right">오른쪽 위</option>
+            <option value="top-left">왼쪽 위</option>
+            <option value="center">가운데</option>
+          </select>
+          <input id="watermarkImageScale" type="number" value="15" min="1" max="100" style="width:60px">
+          <span class="unit">% (사진 가로 기준)</span>
+        </div>
+        <span class="hint">예: 15 → 사진 가로 길이의 15% 크기로 로고가 들어가요</span>
+        <div class="opt-row" style="margin-top:6px">
+          <span class="unit">불투명도</span>
+          <input id="watermarkImageOpacity" type="range" min="10" max="100" value="100" style="width:140px">
+          <span id="watermarkImageOpacityValue" class="unit">100%</span>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">🖼️ 사진 목록 (워터마크 설정이 바로 반영돼요)</h2>
+    <section id="photoGrid" class="grid"></section>
+    <p id="emptyHint" class="empty-hint">사진을 추가해서 시작하세요</p>
+
+    <footer class="actionbar">
+      <button id="pickFolderBtn" class="btn btn-secondary">저장 폴더 선택</button>
+      <span id="folderLabel" class="status-text"></span>
+      <button id="startBtn" class="btn btn-primary btn-lg">저장 시작</button>
+      <div class="progress-wrap">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <span id="statusText" class="status-text"></span>
+      <a id="downloadBtn" class="btn btn-success btn-lg" style="display:none" download>ZIP 다운로드</a>
+    </footer>
+
+  </section>
+
+  <section id="emojiTab" class="tab-panel">
+    <section class="toolbar">
+      <input id="emojiSearch" type="text" class="emoji-search" placeholder="이모지 검색 (예: 별, 하트, 체크)">
+    </section>
+    <nav id="emojiCategories" class="emoji-categories"></nav>
+    <section id="emojiGrid" class="emoji-grid"></section>
+  </section>
+
+  <section id="seoTab" class="tab-panel">
+    <h2 class="section-title">📝 본문 글자수 체크</h2>
+    <section class="options seo-options">
+      <div class="opt seo-opt">
+        <label>본문 내용</label>
+        <textarea id="seoBody" rows="12" placeholder="블로그 본문을 붙여넣으면 글자수·단어수를 세어드려요"></textarea>
+        <div class="seo-meter">
+          <span id="seoBodyCount">0자</span>
+          <span id="seoBodyWords">0단어</span>
+          <span id="seoBodyStatus" class="seo-badge"></span>
+        </div>
+        <span class="hint">500자 이상이면 SEO에 유리하다고 알려져 있어요</span>
+      </div>
+    </section>
+  </section>
+
+</div>
+<div id="toast" class="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script src="{{ url_for('static', filename='emoji-data.js') }}"></script>
+<script src="{{ url_for('static', filename='emoji.js') }}"></script>
+<script src="{{ url_for('static', filename='seo.js') }}"></script>
+</body>
+</html>
