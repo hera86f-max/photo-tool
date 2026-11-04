@@ -11,7 +11,7 @@ from flask import Flask, request, jsonify, send_file, render_template, abort
 from PIL import Image, ImageOps, ImageDraw, ImageFont, ImageColor
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "models"))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
 os.environ.setdefault("U2NET_HOME", MODEL_DIR)
 
 FONT_CANDIDATES = [
