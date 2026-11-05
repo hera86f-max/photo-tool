@@ -40,9 +40,21 @@
     <button class="tab-btn" data-tab="seo">
       <span class="tab-icon">📝</span><span>글자수 체크</span>
     </button>
+    <button class="tab-btn" data-tab="links">
+      <span class="tab-icon">🔗</span><span>사이트 모음</span>
+    </button>
   </nav>
 
   <section id="photoTab" class="tab-panel active">
+
+    <div class="tab-ad-slot">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9172093242980063"
+           data-ad-slot="6424266441"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
 
     <section class="toolbar">
       <button id="addBtn" class="btn btn-primary">+ 사진 추가</button>
@@ -160,6 +172,15 @@
   </section>
 
   <section id="videoTab" class="tab-panel">
+    <div class="tab-ad-slot">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9172093242980063"
+           data-ad-slot="6424266441"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+
     <h2 class="section-title">🎬 사진으로 영상 만들기</h2>
     <p class="tab-hint">"사진 처리" 탭에서 추가한 사진들로 슬라이드 영상을 만들어요. 사진당 보여주는 시간과 자막을 정하고, 원하면 배경음악도 넣을 수 있어요.</p>
 
@@ -200,6 +221,15 @@
   </section>
 
   <section id="emojiTab" class="tab-panel">
+    <div class="tab-ad-slot">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9172093242980063"
+           data-ad-slot="6424266441"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+
     <section class="toolbar">
       <input id="emojiSearch" type="text" class="emoji-search" placeholder="이모지 검색 (예: 별, 하트, 체크)">
     </section>
@@ -208,6 +238,15 @@
   </section>
 
   <section id="seoTab" class="tab-panel">
+    <div class="tab-ad-slot">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9172093242980063"
+           data-ad-slot="6424266441"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+
     <h2 class="section-title">📝 본문 글자수 체크</h2>
     <section class="options seo-options">
       <div class="opt seo-opt">
@@ -223,13 +262,32 @@
     </section>
   </section>
 
+  <section id="linksTab" class="tab-panel">
+    <div class="tab-ad-slot">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9172093242980063"
+           data-ad-slot="6424266441"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+
+    <h2 class="section-title">🔗 자주 쓰는 사이트 모음</h2>
+    <p class="tab-hint">블로그 작업할 때 자주 가는 사이트를 눌러서 바로 이동하세요.</p>
+    <section id="linksGrid" class="links-grid"></section>
+    <p id="linksEmptyHint" class="empty-hint">등록된 사이트가 없어요</p>
+  </section>
+
 </div>
 <div id="toast" class="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script src="{{ url_for('static', filename='video.js') }}"></script>
+<script src="{{ url_for('static', filename='links-data.js') }}"></script>
+<script src="{{ url_for('static', filename='links.js') }}"></script>
 <script src="{{ url_for('static', filename='emoji-data.js') }}"></script>
 <script src="{{ url_for('static', filename='emoji.js') }}"></script>
 <script src="{{ url_for('static', filename='seo.js') }}"></script>
+<script src="{{ url_for('static', filename='ads.js') }}"></script>
 </body>
 </html>
