@@ -441,6 +441,59 @@ img.emoji {
   margin-top: 60px;
 }
 
+.tab-hint {
+  margin: 10px 28px 0;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.video-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 28px;
+}
+
+.video-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+}
+
+.video-row-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #eee;
+  flex-shrink: 0;
+}
+
+.video-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.video-caption-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .video-row-thumb { background: #2a2b31; }
+  .video-caption-input { background: #26272d; color: var(--text); }
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
