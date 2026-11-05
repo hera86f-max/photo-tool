@@ -168,11 +168,14 @@
         <input id="videoDuration" type="range" min="1" max="10" value="3">
       </div>
       <div class="opt">
-        <label>영상 해상도</label>
+        <label>영상 비율/해상도</label>
         <select id="videoResolution">
-          <option value="854x480" selected>480p (빠름, 추천)</option>
-          <option value="1280x720">720p (느림, 고화질)</option>
+          <option value="854x480" selected>16:9 가로 - 480p (빠름, 추천)</option>
+          <option value="1280x720">16:9 가로 - 720p (느림, 고화질)</option>
+          <option value="480x854">9:16 세로 - 480p (빠름, 숏폼 추천)</option>
+          <option value="720x1280">9:16 세로 - 720p (느림, 고화질)</option>
         </select>
+        <span class="hint">9:16은 유튜브 쇼츠·인스타 릴스·틱톡용 세로 영상이에요</span>
       </div>
       <div class="opt">
         <label>배경음악 (선택)</label>
