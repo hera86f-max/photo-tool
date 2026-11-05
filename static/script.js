@@ -111,7 +111,7 @@ if (!supportsFolderPicker) {
 
 pickFolderBtn.addEventListener("click", async () => {
   try {
-    dirHandle = await window.showDirectoryPicker();
+    dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
     folderLabel.textContent = `저장 폴더: ${dirHandle.name}`;
   } catch (err) {
     // 사용자가 선택을 취소한 경우
@@ -352,12 +352,15 @@ startBtn.addEventListener("click", async () => {
     downloadBtn.href = `/api/download/${data.session_id}`;
     downloadBtn.style.display = "inline-flex";
 
+    let saveFailCount = 0;
     if (dirHandle && data.results && data.results.length) {
-      await saveResultsToFolder(data.session_id, data.results);
+      saveFailCount = await saveResultsToFolder(data.session_id, data.results);
     }
 
     progressBar.style.width = "100%";
-    if (data.errors && data.errors.length) {
+    if (saveFailCount > 0) {
+      statusText.textContent = `폴더 저장 실패 ${saveFailCount}건 — ZIP 다운로드를 이용해주세요`;
+    } else if (data.errors && data.errors.length) {
       statusText.textContent = `완료 (오류 ${data.errors.length}건)`;
       console.warn(data.errors);
     } else {
@@ -371,6 +374,7 @@ startBtn.addEventListener("click", async () => {
 });
 
 async function saveResultsToFolder(sid, filenames) {
+  let failCount = 0;
   for (let i = 0; i < filenames.length; i++) {
     const name = filenames[i];
     statusText.textContent = `폴더에 저장 중... (${i + 1}/${filenames.length})`;
@@ -383,8 +387,10 @@ async function saveResultsToFolder(sid, filenames) {
       await writable.close();
     } catch (err) {
       console.warn(`${name} 저장 실패`, err);
+      failCount += 1;
     }
   }
+  return failCount;
 }
 
 updateCount();
