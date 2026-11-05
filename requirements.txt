@@ -3,3 +3,5 @@ Pillow==13.0.0
 rembg==2.0.86
 onnxruntime==1.31.1
 gunicorn==23.0.0
+moviepy==1.0.3
+imageio-ffmpeg==0.6.0

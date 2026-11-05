@@ -2,6 +2,7 @@ import os
 import io
 import re
 import time
+import json
 import uuid
 import base64
 import shutil
@@ -13,6 +14,13 @@ from PIL import Image, ImageOps, ImageDraw, ImageFont, ImageColor
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 os.environ.setdefault("U2NET_HOME", MODEL_DIR)
+
+try:
+    import imageio_ffmpeg
+
+    os.environ.setdefault("FFMPEG_BINARY", imageio_ffmpeg.get_ffmpeg_exe())
+except Exception:
+    pass
 
 FONT_CANDIDATES = [
     os.path.join(BASE_DIR, "static", "fonts", "NanumGothic-Bold.ttf"),
@@ -100,6 +108,12 @@ IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
 INVALID_CHARS = re.compile(r'[\\/:*?"<>|]')
 SESSION_MAX_AGE = 6 * 3600
 
+MAX_VIDEO_PHOTOS = 20
+VIDEO_RESOLUTIONS = {
+    "854x480": (854, 480),
+    "1280x720": (1280, 720),
+}
+
 
 def cleanup_old_sessions():
     now = time.time()
@@ -154,6 +168,62 @@ def save_image(img, path, ext, quality):
         img.save(path, "WEBP", quality=quality)
     else:
         img.convert("RGB").save(path, quality=quality)
+
+
+def fit_to_canvas(img, target_w, target_h, bg=(0, 0, 0)):
+    img = img.convert("RGB")
+    scale = min(target_w / img.width, target_h / img.height)
+    new_w = max(1, round(img.width * scale))
+    new_h = max(1, round(img.height * scale))
+    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGB", (target_w, target_h), bg)
+    offset = ((target_w - new_w) // 2, (target_h - new_h) // 2)
+    canvas.paste(resized, offset)
+    return canvas
+
+
+def draw_caption(img, text):
+    if not text:
+        return img
+    img = img.convert("RGB")
+    draw = ImageDraw.Draw(img)
+    font_size = max(16, img.height // 16)
+    font = get_font(font_size)
+
+    max_width = img.width - 40
+    words = text.split()
+    lines = []
+    cur = ""
+    for w in words:
+        trial = f"{cur} {w}".strip()
+        if draw.textlength(trial, font=font) <= max_width:
+            cur = trial
+        else:
+            if cur:
+                lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    if not lines:
+        lines = [text]
+
+    line_height = font_size + 6
+    block_height = line_height * len(lines) + 20
+    box_top = max(0, img.height - block_height - 20)
+
+    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    odraw = ImageDraw.Draw(overlay)
+    odraw.rectangle([0, box_top, img.width, img.height], fill=(0, 0, 0, 140))
+    img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+
+    draw = ImageDraw.Draw(img)
+    y = box_top + 10
+    for line in lines:
+        w_text = draw.textlength(line, font=font)
+        x = (img.width - w_text) / 2
+        draw.text((x, y), line, font=font, fill=(255, 255, 255))
+        y += line_height
+    return img
 
 
 def get_rembg_session():
@@ -328,6 +398,103 @@ def get_file(session_id, filename):
     if not target.startswith(session_output_dir + os.sep) or not os.path.isfile(target):
         abort(404)
     return send_file(target)
+
+
+@app.route("/api/make-video", methods=["POST"])
+def make_video():
+    cleanup_old_sessions()
+    session_id = request.form.get("session_id")
+    session_upload_dir = os.path.join(UPLOAD_DIR, session_id or "")
+    if not session_id or not os.path.isdir(session_upload_dir):
+        abort(400, "invalid session")
+
+    try:
+        items = json.loads(request.form.get("items_json") or "[]")
+    except Exception:
+        abort(400, "invalid items")
+    if not items:
+        abort(400, "사진이 없습니다")
+    if len(items) > MAX_VIDEO_PHOTOS:
+        abort(400, f"사진은 최대 {MAX_VIDEO_PHOTOS}장까지 가능합니다")
+
+    try:
+        duration = float(request.form.get("duration") or 3)
+    except ValueError:
+        duration = 3.0
+    duration = max(1.0, min(10.0, duration))
+
+    resolution = request.form.get("resolution") or "854x480"
+    target_w, target_h = VIDEO_RESOLUTIONS.get(resolution, VIDEO_RESOLUTIONS["854x480"])
+
+    session_output_dir = os.path.join(OUTPUT_DIR, session_id)
+    os.makedirs(session_output_dir, exist_ok=True)
+
+    frame_dir = os.path.join(session_output_dir, f"frames_{uuid.uuid4().hex}")
+    os.makedirs(frame_dir, exist_ok=True)
+
+    try:
+        frame_paths = []
+        for idx, entry in enumerate(items):
+            stored_name = entry.get("stored_name", "")
+            caption = (entry.get("caption") or "").strip()
+            src_path = os.path.join(session_upload_dir, stored_name)
+            if not os.path.isfile(src_path):
+                continue
+            img = Image.open(src_path)
+            img = ImageOps.exif_transpose(img)
+            img = fit_to_canvas(img, target_w, target_h)
+            if caption:
+                img = draw_caption(img, caption)
+            frame_path = os.path.join(frame_dir, f"{idx:04d}.jpg")
+            img.save(frame_path, "JPEG", quality=90)
+            frame_paths.append(frame_path)
+
+        if not frame_paths:
+            abort(400, "유효한 사진이 없습니다")
+
+        from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
+        from moviepy.audio.fx.all import audio_loop
+
+        clips = [ImageClip(p).set_duration(duration) for p in frame_paths]
+        video = concatenate_videoclips(clips, method="compose")
+
+        music_file = request.files.get("music")
+        audio = None
+        if music_file and music_file.filename:
+            audio_ext = os.path.splitext(music_file.filename)[1].lower() or ".mp3"
+            audio_path = os.path.join(frame_dir, f"music{audio_ext}")
+            music_file.save(audio_path)
+            try:
+                audio = AudioFileClip(audio_path)
+                if audio.duration < video.duration:
+                    audio = audio_loop(audio, duration=video.duration)
+                else:
+                    audio = audio.subclip(0, video.duration)
+                video = video.set_audio(audio)
+            except Exception:
+                audio = None
+
+        out_name = f"video_{uuid.uuid4().hex}.mp4"
+        out_path = os.path.join(session_output_dir, out_name)
+        video.write_videofile(
+            out_path,
+            fps=24,
+            codec="libx264",
+            audio_codec="aac",
+            preset="ultrafast",
+            bitrate="1500k",
+            threads=1,
+            logger=None,
+        )
+        video.close()
+        if audio is not None:
+            audio.close()
+        for c in clips:
+            c.close()
+
+        return jsonify({"video_name": out_name, "session_id": session_id})
+    finally:
+        shutil.rmtree(frame_dir, ignore_errors=True)
 
 
 @app.route("/api/download/<session_id>")
