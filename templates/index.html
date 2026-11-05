@@ -30,6 +30,9 @@
     <button class="tab-btn active" data-tab="photo">
       <span class="tab-icon">🖼️</span><span>사진 처리</span>
     </button>
+    <button class="tab-btn" data-tab="video">
+      <span class="tab-icon">🎬</span><span>영상 만들기</span>
+    </button>
     <button class="tab-btn" data-tab="emoji">
       <span class="tab-icon">😊</span><span>이모지</span>
     </button>
@@ -155,6 +158,43 @@
 
   </section>
 
+  <section id="videoTab" class="tab-panel">
+    <h2 class="section-title">🎬 사진으로 영상 만들기</h2>
+    <p class="tab-hint">"사진 처리" 탭에서 추가한 사진들로 슬라이드 영상을 만들어요. 사진당 보여주는 시간과 자막을 정하고, 원하면 배경음악도 넣을 수 있어요.</p>
+
+    <section class="options">
+      <div class="opt">
+        <label>사진당 보여주는 시간 <span id="videoDurationValue">3초</span></label>
+        <input id="videoDuration" type="range" min="1" max="10" value="3">
+      </div>
+      <div class="opt">
+        <label>영상 해상도</label>
+        <select id="videoResolution">
+          <option value="854x480" selected>480p (빠름, 추천)</option>
+          <option value="1280x720">720p (느림, 고화질)</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>배경음악 (선택)</label>
+        <input id="videoMusicFile" type="file" accept="audio/*">
+        <span class="hint">저작권 문제 없는 음악 파일만 사용해 주세요 (예: 유튜브 오디오 라이브러리)</span>
+      </div>
+    </section>
+
+    <h2 class="section-title">자막 (사진별, 비워두면 자막 없음)</h2>
+    <section id="videoList" class="video-list"></section>
+    <p id="videoEmptyHint" class="empty-hint">먼저 "사진 처리" 탭에서 사진을 추가하세요</p>
+
+    <footer class="actionbar">
+      <button id="makeVideoBtn" class="btn btn-primary btn-lg">영상 만들기</button>
+      <div class="progress-wrap">
+        <div id="videoProgressBar" class="progress-bar"></div>
+      </div>
+      <span id="videoStatusText" class="status-text"></span>
+      <a id="videoDownloadBtn" class="btn btn-success btn-lg" style="display:none" download>영상 다운로드 (mp4)</a>
+    </footer>
+  </section>
+
   <section id="emojiTab" class="tab-panel">
     <section class="toolbar">
       <input id="emojiSearch" type="text" class="emoji-search" placeholder="이모지 검색 (예: 별, 하트, 체크)">
@@ -183,6 +223,7 @@
 <div id="toast" class="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
+<script src="{{ url_for('static', filename='video.js') }}"></script>
 <script src="{{ url_for('static', filename='emoji-data.js') }}"></script>
 <script src="{{ url_for('static', filename='emoji.js') }}"></script>
 <script src="{{ url_for('static', filename='seo.js') }}"></script>
