@@ -531,12 +531,12 @@ img.emoji {
 }
 
 .tab-ad-slot {
-  padding: 12px 28px 0;
+  padding: 12px 28px;
   overflow: hidden;
 }
 
 @media (max-width: 640px) {
-  .tab-ad-slot { padding: 10px 16px 0; }
+  .tab-ad-slot { padding: 10px 16px; }
 }
 
 .card {
