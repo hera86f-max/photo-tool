@@ -24,6 +24,7 @@
       <li><span class="step-num">2</span>저장 폴더를 선택하거나 ZIP으로 받아요</li>
       <li><span class="step-num">3</span>"저장 시작"을 누르면 끝!</li>
       <li><span class="step-num">4</span>"영상 만들기" 탭에서는 사진들을 이어 붙여 슬라이드 영상(자막·배경음악 추가 가능)으로 만들 수 있어요</li>
+      <li><span class="step-num">5</span>"사진 합치기" 탭에서는 사진 2장 이상을 나란히 또는 격자로 묶어 하나의 이미지로 만들 수 있어요</li>
     </ol>
   </section>
 
@@ -33,6 +34,9 @@
     </button>
     <button class="tab-btn" data-tab="video">
       <span class="tab-icon">🎬</span><span>영상 만들기</span>
+    </button>
+    <button class="tab-btn" data-tab="merge">
+      <span class="tab-icon">🧩</span><span>사진 합치기</span>
     </button>
     <button class="tab-btn" data-tab="emoji">
       <span class="tab-icon">😊</span><span>이모지</span>
@@ -220,6 +224,56 @@
     </footer>
   </section>
 
+  <section id="mergeTab" class="tab-panel">
+    <h2 class="section-title">🧩 사진 두 장 이상 하나로 합치기</h2>
+    <p class="tab-hint">"사진 처리" 탭에서 추가한 사진 중 2장 이상을 선택하면 나란히 배치하거나 격자로 묶어서 하나의 이미지로 만들어드려요. 사진은 잘리지 않고 그대로 들어가요.</p>
+
+    <section class="options">
+      <div class="opt">
+        <label>배치 방식</label>
+        <select id="mergeLayout">
+          <option value="horizontal" selected>가로로 나란히</option>
+          <option value="vertical">세로로 나란히</option>
+          <option value="grid">격자로 배치</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>사진 간격 <span id="mergeSpacingValue">10px</span></label>
+        <input id="mergeSpacing" type="range" min="0" max="40" value="10">
+      </div>
+      <div class="opt">
+        <label>배경색 (간격·여백 색상)</label>
+        <input id="mergeBgColor" type="color" value="#ffffff">
+      </div>
+    </section>
+
+    <h2 class="section-title">합칠 사진 선택 (클릭한 순서대로 배치돼요, 최대 6장)</h2>
+    <section id="mergeGrid" class="merge-grid"></section>
+    <p id="mergeEmptyHint" class="empty-hint">먼저 "사진 처리" 탭에서 사진을 2장 이상 추가하세요</p>
+
+    <div id="mergePreviewWrap" class="merge-preview-wrap" style="display:none">
+      <img id="mergePreviewImg" class="merge-preview-img">
+    </div>
+
+    <div class="tab-ad-slot">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-9172093242980063"
+           data-ad-slot="6424266441"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+
+    <footer class="actionbar">
+      <button id="mergeBtn" class="btn btn-primary btn-lg">합치기</button>
+      <div class="progress-wrap">
+        <div id="mergeProgressBar" class="progress-bar"></div>
+      </div>
+      <span id="mergeStatusText" class="status-text"></span>
+      <a id="mergeDownloadBtn" class="btn btn-success btn-lg" style="display:none" download>이미지 다운로드</a>
+    </footer>
+  </section>
+
   <section id="emojiTab" class="tab-panel">
     <section class="toolbar">
       <input id="emojiSearch" type="text" class="emoji-search" placeholder="이모지 검색 (예: 별, 하트, 체크)">
@@ -283,6 +337,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script src="{{ url_for('static', filename='video.js') }}"></script>
+<script src="{{ url_for('static', filename='merge.js') }}"></script>
 <script src="{{ url_for('static', filename='links-data.js') }}"></script>
 <script src="{{ url_for('static', filename='links.js') }}"></script>
 <script src="{{ url_for('static', filename='emoji-data.js') }}"></script>
