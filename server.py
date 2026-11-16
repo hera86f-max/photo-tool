@@ -189,6 +189,23 @@ def resize_to_width(img, target_w):
     return img.resize((target_w, new_h), Image.Resampling.LANCZOS)
 
 
+def crop_to_fill(img, target_w, target_h):
+    target_w = max(1, target_w)
+    target_h = max(1, target_h)
+    img_ratio = img.width / img.height
+    target_ratio = target_w / target_h
+    if img_ratio > target_ratio:
+        new_h = target_h
+        new_w = max(1, round(img.width * (target_h / img.height)))
+    else:
+        new_w = target_w
+        new_h = max(1, round(img.height * (target_w / img.width)))
+    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    left = (resized.width - target_w) // 2
+    top = (resized.height - target_h) // 2
+    return resized.crop((left, top, left + target_w, top + target_h))
+
+
 def fit_to_canvas(img, target_w, target_h, bg=(0, 0, 0)):
     img = img.convert("RGB")
     scale = min(target_w / img.width, target_h / img.height)
@@ -548,6 +565,8 @@ def merge_photos():
     except ValueError:
         bg = (255, 255, 255)
 
+    crop_fill = (request.form.get("crop_fill") or "") in ("1", "true", "on")
+
     imgs = []
     for entry in items:
         stored_name = entry.get("stored_name", "")
@@ -563,7 +582,11 @@ def merge_photos():
 
     if layout == "horizontal":
         target_h = min(min(im.height for im in imgs), MERGE_MAX_DIM)
-        resized = [resize_to_height(im, target_h) for im in imgs]
+        if crop_fill:
+            target_w_each = min(min(im.width for im in imgs), MERGE_MAX_DIM)
+            resized = [crop_to_fill(im, target_w_each, target_h) for im in imgs]
+        else:
+            resized = [resize_to_height(im, target_h) for im in imgs]
         total_w = sum(im.width for im in resized) + spacing * (len(resized) - 1)
         canvas = Image.new("RGB", (total_w, target_h), bg)
         x = 0
@@ -572,7 +595,11 @@ def merge_photos():
             x += im.width + spacing
     elif layout == "vertical":
         target_w = min(min(im.width for im in imgs), MERGE_MAX_DIM)
-        resized = [resize_to_width(im, target_w) for im in imgs]
+        if crop_fill:
+            target_h_each = min(min(im.height for im in imgs), MERGE_MAX_DIM)
+            resized = [crop_to_fill(im, target_w, target_h_each) for im in imgs]
+        else:
+            resized = [resize_to_width(im, target_w) for im in imgs]
         total_h = sum(im.height for im in resized) + spacing * (len(resized) - 1)
         canvas = Image.new("RGB", (target_w, total_h), bg)
         y = 0
@@ -582,14 +609,18 @@ def merge_photos():
     else:
         cols = 2
         rows = (len(imgs) + cols - 1) // cols
-        cell_w = min(max(im.width for im in imgs), MERGE_MAX_DIM)
-        cell_h = min(max(im.height for im in imgs), MERGE_MAX_DIM)
+        if crop_fill:
+            cell_w = min(min(im.width for im in imgs), MERGE_MAX_DIM)
+            cell_h = min(min(im.height for im in imgs), MERGE_MAX_DIM)
+        else:
+            cell_w = min(max(im.width for im in imgs), MERGE_MAX_DIM)
+            cell_h = min(max(im.height for im in imgs), MERGE_MAX_DIM)
         total_w = cell_w * cols + spacing * (cols + 1)
         total_h = cell_h * rows + spacing * (rows + 1)
         canvas = Image.new("RGB", (total_w, total_h), bg)
         for idx, im in enumerate(imgs):
             r, c = divmod(idx, cols)
-            cell_img = fit_to_canvas(im, cell_w, cell_h, bg)
+            cell_img = crop_to_fill(im, cell_w, cell_h) if crop_fill else fit_to_canvas(im, cell_w, cell_h, bg)
             x = spacing + c * (cell_w + spacing)
             y = spacing + r * (cell_h + spacing)
             canvas.paste(cell_img, (x, y))
