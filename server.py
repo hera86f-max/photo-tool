@@ -116,6 +116,9 @@ VIDEO_RESOLUTIONS = {
     "720x1280": (720, 1280),
 }
 
+MAX_MERGE_PHOTOS = 6
+MERGE_MAX_DIM = 1600
+
 
 def cleanup_old_sessions():
     now = time.time()
@@ -170,6 +173,20 @@ def save_image(img, path, ext, quality):
         img.save(path, "WEBP", quality=quality)
     else:
         img.convert("RGB").save(path, quality=quality)
+
+
+def resize_to_height(img, target_h):
+    target_h = max(1, target_h)
+    ratio = target_h / img.height
+    new_w = max(1, round(img.width * ratio))
+    return img.resize((new_w, target_h), Image.Resampling.LANCZOS)
+
+
+def resize_to_width(img, target_w):
+    target_w = max(1, target_w)
+    ratio = target_w / img.width
+    new_h = max(1, round(img.height * ratio))
+    return img.resize((target_w, new_h), Image.Resampling.LANCZOS)
 
 
 def fit_to_canvas(img, target_w, target_h, bg=(0, 0, 0)):
@@ -497,6 +514,93 @@ def make_video():
         return jsonify({"video_name": out_name, "session_id": session_id})
     finally:
         shutil.rmtree(frame_dir, ignore_errors=True)
+
+
+@app.route("/api/merge-photos", methods=["POST"])
+def merge_photos():
+    cleanup_old_sessions()
+    session_id = request.form.get("session_id")
+    session_upload_dir = os.path.join(UPLOAD_DIR, session_id or "")
+    if not session_id or not os.path.isdir(session_upload_dir):
+        abort(400, "invalid session")
+
+    try:
+        items = json.loads(request.form.get("items_json") or "[]")
+    except Exception:
+        abort(400, "invalid items")
+    if len(items) < 2:
+        abort(400, "사진을 2장 이상 선택해 주세요")
+    if len(items) > MAX_MERGE_PHOTOS:
+        abort(400, f"사진은 최대 {MAX_MERGE_PHOTOS}장까지 합칠 수 있습니다")
+
+    layout = request.form.get("layout") or "horizontal"
+    if layout not in ("horizontal", "vertical", "grid"):
+        layout = "horizontal"
+
+    try:
+        spacing = int(request.form.get("spacing") or 0)
+    except ValueError:
+        spacing = 0
+    spacing = max(0, min(60, spacing))
+
+    try:
+        bg = ImageColor.getrgb(request.form.get("bg_color") or "#ffffff")
+    except ValueError:
+        bg = (255, 255, 255)
+
+    imgs = []
+    for entry in items:
+        stored_name = entry.get("stored_name", "")
+        src_path = os.path.join(session_upload_dir, stored_name)
+        if not os.path.isfile(src_path):
+            continue
+        img = Image.open(src_path)
+        img = ImageOps.exif_transpose(img).convert("RGB")
+        imgs.append(img)
+
+    if len(imgs) < 2:
+        abort(400, "유효한 사진이 2장 이상 필요합니다")
+
+    if layout == "horizontal":
+        target_h = min(min(im.height for im in imgs), MERGE_MAX_DIM)
+        resized = [resize_to_height(im, target_h) for im in imgs]
+        total_w = sum(im.width for im in resized) + spacing * (len(resized) - 1)
+        canvas = Image.new("RGB", (total_w, target_h), bg)
+        x = 0
+        for im in resized:
+            canvas.paste(im, (x, 0))
+            x += im.width + spacing
+    elif layout == "vertical":
+        target_w = min(min(im.width for im in imgs), MERGE_MAX_DIM)
+        resized = [resize_to_width(im, target_w) for im in imgs]
+        total_h = sum(im.height for im in resized) + spacing * (len(resized) - 1)
+        canvas = Image.new("RGB", (target_w, total_h), bg)
+        y = 0
+        for im in resized:
+            canvas.paste(im, (0, y))
+            y += im.height + spacing
+    else:
+        cols = 2
+        rows = (len(imgs) + cols - 1) // cols
+        cell_w = min(max(im.width for im in imgs), MERGE_MAX_DIM)
+        cell_h = min(max(im.height for im in imgs), MERGE_MAX_DIM)
+        total_w = cell_w * cols + spacing * (cols + 1)
+        total_h = cell_h * rows + spacing * (rows + 1)
+        canvas = Image.new("RGB", (total_w, total_h), bg)
+        for idx, im in enumerate(imgs):
+            r, c = divmod(idx, cols)
+            cell_img = fit_to_canvas(im, cell_w, cell_h, bg)
+            x = spacing + c * (cell_w + spacing)
+            y = spacing + r * (cell_h + spacing)
+            canvas.paste(cell_img, (x, y))
+
+    session_output_dir = os.path.join(OUTPUT_DIR, session_id)
+    os.makedirs(session_output_dir, exist_ok=True)
+    out_name = f"merge_{uuid.uuid4().hex}.jpg"
+    out_path = os.path.join(session_output_dir, out_name)
+    canvas.save(out_path, "JPEG", quality=92)
+
+    return jsonify({"merge_name": out_name, "session_id": session_id})
 
 
 @app.route("/api/download/<session_id>")
