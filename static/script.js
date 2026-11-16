@@ -156,7 +156,7 @@ function renderCard(photo) {
 
   const keywordInput = document.createElement("input");
   keywordInput.className = "keyword-input";
-  keywordInput.placeholder = "키워드";
+  keywordInput.placeholder = "파일명 키워드";
   keywordInput.value = photo.keyword;
   keywordInput.addEventListener("input", () => {
     photo.keyword = keywordInput.value;
