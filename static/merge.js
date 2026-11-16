@@ -2,6 +2,7 @@ const mergeLayoutSelect = document.getElementById("mergeLayout");
 const mergeSpacingInput = document.getElementById("mergeSpacing");
 const mergeSpacingValue = document.getElementById("mergeSpacingValue");
 const mergeBgColorInput = document.getElementById("mergeBgColor");
+const mergeCropFillInput = document.getElementById("mergeCropFill");
 const mergeGrid = document.getElementById("mergeGrid");
 const mergeEmptyHint = document.getElementById("mergeEmptyHint");
 const mergeBtn = document.getElementById("mergeBtn");
@@ -87,6 +88,7 @@ mergeBtn.addEventListener("click", async () => {
   formData.append("layout", mergeLayoutSelect.value);
   formData.append("spacing", mergeSpacingInput.value);
   formData.append("bg_color", mergeBgColorInput.value);
+  formData.append("crop_fill", mergeCropFillInput.checked ? "1" : "0");
 
   try {
     const res = await fetch("/api/merge-photos", { method: "POST", body: formData });
